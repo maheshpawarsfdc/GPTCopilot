@@ -39,6 +39,28 @@ public class ChatGPT {
             return 'Error in GPT API request: ' + e.getMessage();
         }
         
-        return resp.getBody();  
+        return parseResponse(resp.getBody()); // Parse and return the natural language response
     }
+
+    private static String parseResponse(String responseBody) {
+        // Deserialize the response JSON
+        Map<String, Object> jsonResponse = (Map<String, Object>) JSON.deserializeUntyped(responseBody);
+        
+        // Check if 'choices' exist and get the content of the first choice's message
+        if (jsonResponse.containsKey('choices')) {
+            List<Object> choices = (List<Object>) jsonResponse.get('choices');
+            if (!choices.isEmpty()) {
+                Map<String, Object> firstChoice = (Map<String, Object>) choices[0];
+                if (firstChoice.containsKey('message')) {
+                    Map<String, Object> message = (Map<String, Object>) firstChoice.get('message');
+                    return (String) message.get('content'); // Return the content of the message
+                }
+            }
+        }
+        
+        return 'No valid response from API.'; // Default message if no content found
+    }
+
+
+
 }
