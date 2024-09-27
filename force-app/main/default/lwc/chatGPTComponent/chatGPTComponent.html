@@ -1,0 +1,29 @@
+<template>
+    <lightning-card title="Salesforce GPT Assistant" icon-name="utility:chat">
+        <div class="slds-p-around_medium">
+            <!-- Input field for user queries -->
+            <lightning-textarea 
+                label="Ask a Question" 
+                value={userQuery} 
+                onchange={handleQueryChange}
+                placeholder="Ask about Salesforce objects, metadata, or record details...">
+            </lightning-textarea>
+
+            <!-- Submit button -->
+            <lightning-button 
+                label="Submit Query" 
+                onclick={handleQuerySubmit} 
+                class="slds-m-top_small">
+            </lightning-button>
+        </div>
+
+        <!-- Show GPT Response if available -->
+        <template if:true={response}>
+            <lightning-card title="GPT Response">
+                <div class="slds-p-around_medium">
+                    <lightning-formatted-text value={response}></lightning-formatted-text> <!-- Correct binding here -->
+                </div>
+            </lightning-card>
+        </template>
+    </lightning-card>
+</template>
