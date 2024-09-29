@@ -39,33 +39,82 @@ public with sharing class GPTIntegrationController {
     }
 
     @AuraEnabled
-    public static String getRecordDetails(String query) {
-        try {
-            Pattern pattern = Pattern.compile('(?i)(fetch|get) details for (\\w+) with (.+)');
-            Matcher matcher = pattern.matcher(query);
+public static String getRecordDetails(String query) {
+    try {
+        // Updated regex pattern for capturing object, field, and value
+        Pattern pattern = Pattern.compile('(?i)(fetch|get) details for (\\w+) with (\\w+)=(.+)');
+        Matcher matcher = pattern.matcher(query);
 
-            if (matcher.find()) {
-                String objectApiName = matcher.group(2);
-                String criteria = matcher.group(3).trim();
+        if (matcher.find()) {
+            String objectApiName = matcher.group(2);  // Object name
+            String fieldName = matcher.group(3);      // Field name
+            String fieldValue = matcher.group(4).trim();  // Field value
 
-                if (!isValidObject(objectApiName)) {
-                    return 'Invalid object name: ' + objectApiName;
+            // Validate the object name
+            if (!isValidObject(objectApiName)) {
+                return 'Invalid object name: ' + objectApiName;
+            }
+
+            // Get the fields of the object dynamically
+            DescribeSObjectResult describeResult = Schema.getGlobalDescribe().get(objectApiName).getDescribe();
+            Map<String, Schema.SObjectField> fieldsMap = describeResult.fields.getMap();
+            
+            // Create a list of all field names
+            List<String> fieldNames = new List<String>();
+            for (String key : fieldsMap.keySet()) {
+                fieldNames.add(key);
+            }
+            
+            // Build the SOQL query with all fields
+            String soqlQuery = 'SELECT ' + String.join(fieldNames, ', ') + 
+                               ' FROM ' + objectApiName + 
+                               ' WHERE ' + fieldName + ' = :fieldValue';
+
+            // Execute the query
+            List<SObject> records = Database.query(soqlQuery);
+
+            if (records.isEmpty()) {
+                return 'No records found for ' + objectApiName + ' where ' + fieldName + ' = ' + fieldValue;
+            } else {
+                String response = 'Record Details:\n';
+
+                // Loop through all records and format each record's fields
+                for (SObject record : records) {
+                    Map<String, Object> recordDetails = record.getPopulatedFieldsAsMap();
+
+                    // Loop through each field and its value in the record
+                    for (String fieldKey : recordDetails.keySet()) {
+                        String fieldLabel = fieldsMap.get(fieldKey).getDescribe().getLabel();
+                        Object fieldValueOutput = recordDetails.get(fieldKey);
+                        response += fieldLabel + ': ' + fieldValueOutput + '\n'; // Use string concatenation
+                    }
+
+                    response += '\n';  // Add a blank line between records
                 }
 
-                Map<String, Object> record = OrgMetadatUtilityClass.getRecordDetails(objectApiName, criteria);
-                return 'Record Details: ' + JSON.serializePretty(record);
-            } else {
-                return 'Could not parse the query. Please use the format: "Fetch details for [Object] with [Criteria]"';
+                return response;
             }
-        } catch (Exception e) {
-            return 'Error fetching record details: ' + e.getMessage();
+        } else {
+            return 'Could not parse the query. Please use the format: "Fetch details for [Object] with [Field]=[Value]"';
         }
+    } catch (Exception e) {
+        return 'Error fetching record details: ' + e.getMessage();
     }
+}
+
 
     // Use Schema to validate object names dynamically
     private static Boolean isValidObject(String objectApiName) {
         Map<String, Schema.SObjectType> sObjectTypes = Schema.getGlobalDescribe();
         return sObjectTypes.containsKey(objectApiName);
+    }
+
+     // Use Schema to validate field names dynamically
+     private static Boolean isValidField(String objectApiName, String fieldName) {
+        Map<String, Schema.SObjectType> sObjectTypes = Schema.getGlobalDescribe();
+        Schema.DescribeSObjectResult objDescribe = sObjectTypes.get(objectApiName).getDescribe();
+        Map<String, Schema.SObjectField> fields = objDescribe.fields.getMap();
+        return fields.containsKey(fieldName);
     }
 
     @AuraEnabled
