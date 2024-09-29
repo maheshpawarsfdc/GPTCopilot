@@ -3,26 +3,35 @@ import processQuery from '@salesforce/apex/GPTIntegrationController.processQuery
 
 export default class ChatGPTComponent extends LightningElement {
     userQuery = '';
-    response = '';  // This is the response that will be shown on the UI
+    response = '';
+    isLoading = false;  // Spinner to indicate loading
 
     // Handle query input changes
     handleQueryChange(event) {
         this.userQuery = event.target.value;
-        console.log('User Query updated: ' + this.userQuery); // Debugging statement
     }
 
     // Handle query submission
     handleQuerySubmit() {
-        console.log('Submitting query: ' + this.userQuery); // Debug before submission
-        
+        if (this.userQuery.trim() === '') {
+            this.response = 'Please enter a valid query.';
+            return;
+        }
+
+        this.isLoading = true;  // Show spinner
+        this.response = '';  // Clear previous response
+
         processQuery({ userQuery: this.userQuery })
             .then(result => {
-                console.log('Received response: ' + result); // Debugging statement to check response
                 this.response = result;  // Update the reactive field 'response'
             })
             .catch(error => {
-                console.error('Error during query submission: ' + JSON.stringify(error)); // Debug error
+                console.error('Error during query submission:', error);
                 this.response = 'Error occurred while processing the query.';
+            })
+            .finally(() => {
+                this.isLoading = false;  // Hide spinner
+                this.userQuery = '';  // Clear input field after submission
             });
     }
 }

@@ -1,11 +1,9 @@
 public class ChatGPT {
     private static final String ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions'; 
-    
+
     @AuraEnabled
     public static string getChatGPTResult(String searchTerm) {
-        System.debug('Received search term: ' + searchTerm); // Debug the input search term
         String searchQueryEscape = String.isNotBlank(searchTerm) ? searchTerm.trim() : '';
-        System.debug('Search term after escaping: ' + searchQueryEscape);
 
         HttpRequest request = new HttpRequest();
         request.setEndpoint(ENDPOINT);
@@ -21,46 +19,42 @@ public class ChatGPT {
         messagesList.add(message);
 
         requestBody.put('messages', messagesList);
-        requestBody.put('model', 'llama3-8b-8192'); 
+        requestBody.put('model', 'llama3-8b-8192');  // Adjust model if necessary
 
         String reqBody = JSON.serialize(requestBody);
-        System.debug('Request body being sent to GPT API: ' + reqBody); // Debug the request body
-
         request.setBody(reqBody);
         request.setMethod('POST');
 
         Http http = new Http();
         HttpResponse resp;
+
         try {
             resp = http.send(request);
-            System.debug('Received GPT Response: ' + resp.getBody()); // Debug the API response
+            if (resp.getStatusCode() == 200) {
+                return parseResponse(resp.getBody()); // Parse and return natural language response
+            } else if (resp.getStatusCode() == 429) {  // API rate limit
+                return 'API rate limit exceeded. Please try again later.';
+            } else {
+                return 'API Error: ' + resp.getStatusCode() + ' - ' + resp.getBody();
+            }
         } catch (Exception e) {
-            System.debug('Error sending request to GPT API: ' + e.getMessage());
             return 'Error in GPT API request: ' + e.getMessage();
         }
-        
-        return parseResponse(resp.getBody()); // Parse and return the natural language response
     }
 
     private static String parseResponse(String responseBody) {
-        // Deserialize the response JSON
         Map<String, Object> jsonResponse = (Map<String, Object>) JSON.deserializeUntyped(responseBody);
         
-        // Check if 'choices' exist and get the content of the first choice's message
         if (jsonResponse.containsKey('choices')) {
             List<Object> choices = (List<Object>) jsonResponse.get('choices');
             if (!choices.isEmpty()) {
                 Map<String, Object> firstChoice = (Map<String, Object>) choices[0];
                 if (firstChoice.containsKey('message')) {
                     Map<String, Object> message = (Map<String, Object>) firstChoice.get('message');
-                    return (String) message.get('content'); // Return the content of the message
+                    return (String) message.get('content');  // Return message content
                 }
             }
         }
-        
-        return 'No valid response from API.'; // Default message if no content found
+        return 'No valid response from API.';
     }
-
-
-
 }
