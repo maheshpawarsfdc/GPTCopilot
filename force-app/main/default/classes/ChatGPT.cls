@@ -9,6 +9,7 @@ public class ChatGPT {
         request.setEndpoint(ENDPOINT);
         request.setHeader('Authorization', 'Bearer ' + System.Label.Chat_GPT_API_Key);
         request.setHeader('Content-Type', 'application/json');
+        request.setTimeout(60000); // Setting the timeout to 60 seconds
 
         Map<String, Object> requestBody = new Map<String, Object>(); 
         List<Map<String, String>> messagesList = new List<Map<String, String>>();

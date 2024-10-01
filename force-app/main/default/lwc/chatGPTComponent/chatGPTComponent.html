@@ -1,34 +1,68 @@
 <template>
     <lightning-card title="Salesforce GPT Assistant" icon-name="utility:chat">
-        <div class="slds-p-around_medium">
-            <!-- Input field for user queries -->
-            <lightning-textarea 
-                label="Ask a Question" 
-                value={userQuery} 
-                onchange={handleQueryChange}
-                placeholder="Ask about Salesforce objects, metadata, or record details...">
-            </lightning-textarea>
+        <div class="chat-container">
+            <div class="chat-input">
+                <lightning-textarea 
+                    label="Ask a Question" 
+                    value={userQuery} 
+                    onchange={handleQueryChange}
+                    placeholder="Ask about Salesforce objects, metadata, or record details...">
+                </lightning-textarea>
 
-            <!-- Submit button with loading spinner -->
-            <lightning-button 
-                label="Submit Query" 
-                onclick={handleQuerySubmit} 
-                class="slds-m-top_small" 
-                disabled={isLoading}>
-            </lightning-button>
+                <div class="slds-m-top_small">
+                    <lightning-button 
+                        label="Submit Query" 
+                        variant="brand"
+                        onclick={handleQuerySubmit} 
+                        class="slds-m-right_x-small" 
+                        disabled={isLoading}>
+                    </lightning-button>
 
-            <template if:true={isLoading}>
-                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
-            </template>
-        </div>
-
-        <!-- Show GPT Response if available -->
-        <template if:true={response}>
-            <lightning-card title="GPT Response">
-                <div class="slds-p-around_medium">
-                    <lightning-formatted-text value={response}></lightning-formatted-text> 
+                    <lightning-button 
+                        label="Clear" 
+                        variant="brand-outline" 
+                        onclick={handleClearChatHistory} 
+                        class="slds-m-right_x-small">
+                    </lightning-button>
                 </div>
-            </lightning-card>
-        </template>
+
+                <template if:true={isLoading}>
+                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+                </template>
+            </div>
+
+            <div class="chat-history" style="overflow-y: auto;">
+                <template for:each={chatHistory} for:item="chat">
+                    <div key={chat.id} class="chat-message">
+                        <div class="query">
+                            <strong>User:</strong> {chat.query}
+                        </div>
+                        <div class="response">
+                            <template if:true={chat.responseFields}>
+                                <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                    <thead>
+                                        <tr class="slds-text-title_caps">
+                                            <th>Field</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <template for:each={chat.responseFields} for:item="field">
+                                            <tr key={field.name}>
+                                                <td>{field.name}</td>
+                                                <td>{field.value}</td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </template>
+                            <template if:false={chat.responseFields}>
+                                <div>{chat.response}</div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
     </lightning-card>
 </template>

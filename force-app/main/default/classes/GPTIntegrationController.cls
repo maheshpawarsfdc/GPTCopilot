@@ -1,22 +1,18 @@
-public with sharing class GPTIntegrationController {
+public with sharing class GPTIntegrationController { 
 
     @AuraEnabled
-    public static String processQuery(String userQuery) {
-        String response;
-
+    public static Object processQuery(String userQuery) {  // Change return type to Object for flexibility
         try {
             if (userQuery.contains('Apex classes') || userQuery.contains('Apex triggers')) {
-                response = getMetadataInfo(userQuery);
+                return getMetadataInfo(userQuery);
             } else if (userQuery.toLowerCase().contains('fetch details for') || userQuery.toLowerCase().contains('get details for')) {
-                response = getRecordDetails(userQuery);
+                return getRecordDetails(userQuery);
             } else {
-                response = getGPTResponse(userQuery);
+                return getGPTResponse(userQuery);
             }
         } catch (Exception e) {
             return 'Error processing query: ' + e.getMessage();
         }
-
-        return response;
     }
 
     @AuraEnabled
@@ -40,6 +36,8 @@ public with sharing class GPTIntegrationController {
 
     @AuraEnabled
 public static String getRecordDetails(String query) {
+    String response = '';  // Initialize response as an empty string
+
     try {
         // Updated regex pattern for capturing object, field, and value
         Pattern pattern = Pattern.compile('(?i)(fetch|get) details for (\\w+) with (\\w+)=(.+)');
@@ -76,7 +74,7 @@ public static String getRecordDetails(String query) {
             if (records.isEmpty()) {
                 return 'No records found for ' + objectApiName + ' where ' + fieldName + ' = ' + fieldValue;
             } else {
-                String response = 'Record Details:\n';
+                response += 'Record Details:\n';
 
                 // Loop through all records and format each record's fields
                 for (SObject record : records) {
@@ -92,7 +90,7 @@ public static String getRecordDetails(String query) {
                     response += '\n';  // Add a blank line between records
                 }
 
-                return response;
+                return response; // Return the formatted response string
             }
         } else {
             return 'Could not parse the query. Please use the format: "Fetch details for [Object] with [Field]=[Value]"';
@@ -109,8 +107,8 @@ public static String getRecordDetails(String query) {
         return sObjectTypes.containsKey(objectApiName);
     }
 
-     // Use Schema to validate field names dynamically
-     private static Boolean isValidField(String objectApiName, String fieldName) {
+    // Use Schema to validate field names dynamically
+    private static Boolean isValidField(String objectApiName, String fieldName) {
         Map<String, Schema.SObjectType> sObjectTypes = Schema.getGlobalDescribe();
         Schema.DescribeSObjectResult objDescribe = sObjectTypes.get(objectApiName).getDescribe();
         Map<String, Schema.SObjectField> fields = objDescribe.fields.getMap();
