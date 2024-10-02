@@ -5,6 +5,7 @@ public class ChatGPT {
     public static string getChatGPTResult(String searchTerm) {
         String searchQueryEscape = String.isNotBlank(searchTerm) ? searchTerm.trim() : '';
 
+        
         HttpRequest request = new HttpRequest();
         request.setEndpoint(ENDPOINT);
         request.setHeader('Authorization', 'Bearer ' + System.Label.Chat_GPT_API_Key);

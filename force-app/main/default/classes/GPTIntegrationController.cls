@@ -90,6 +90,8 @@ public static String getRecordDetails(String query) {
                     response += '\n';  // Add a blank line between records
                 }
 
+
+                
                 return response; // Return the formatted response string
             }
         } else {

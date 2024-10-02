@@ -13,6 +13,7 @@ export default class ChatGPTComponent extends LightningElement {
         this.userQuery = event.target.value;
     }
 
+    
     // Handle query submission
     handleQuerySubmit() {
         if (this.userQuery.trim() === '') {
