@@ -1,37 +1,30 @@
 .chat-container {
-    display: flex;
-    flex-direction: row;
+    max-height: 400px;
+    overflow: auto;
     justify-content: space-between;
-    height: 400px; /* Set height for scrolling */
 }
 
-.chat-input {
-    width: 30%; /* Width of the input area */
-    padding: 10px;
-}
-
-.chat-history {
-    width: 70%; /* Width of the response area */
-    border-left: 1px solid #ccc; /* Optional separation line */
-    overflow-y: auto; /* Enable scrolling */
-    height: 100%; /* Full height */
-    padding: 10px;
+.chat-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding: 1rem;
+    margin-bottom: 1rem;
 }
 
 .chat-message {
     margin-bottom: 10px;
 }
 
-
-
 .query {
-    background-color: #f1f1f1; /* User message background */
+    color: #ffffff; /* User message text color (white) */
     padding: 8px;
     border-radius: 5px;
+    margin-bottom: 0.5rem;
 }
 
 .response {
-   
+    background-color: #f3f3f3; /* GPT response background color (grey) */
     padding: 8px;
     border-radius: 5px;
+    margin-bottom: 0.5rem;
 }

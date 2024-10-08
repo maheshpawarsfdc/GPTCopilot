@@ -24,7 +24,10 @@ export default class ChatGPTComponent extends LightningElement {
         this.isLoading = true;  // Show spinner
         this.response = '';  // Clear previous response
 
-        processQuery({ userQuery: this.userQuery })
+            // Prepare conversation history to send to backend
+    const conversationHistory = this.chatHistory.map(chat => `User: ${chat.query}\nChatBot: ${chat.response}`).join('\n');
+
+        processQuery({ userQuery: this.userQuery, conversationHistory: conversationHistory })
             .then(result => {
                 this.response = result;  // Update the reactive field 'response'
                 this.addToChatHistory(this.userQuery, this.response); // Add to chat history

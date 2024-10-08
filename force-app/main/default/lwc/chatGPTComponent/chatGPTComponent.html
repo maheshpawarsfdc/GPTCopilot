@@ -1,16 +1,50 @@
 <template>
-    <lightning-card title="Salesforce GPT Assistant" icon-name="utility:chat">
-        <div class="chat-container">
-            <div class="chat-input">
-                <lightning-textarea 
-                    label="Ask a Question" 
-                    value={userQuery} 
-                    onchange={handleQueryChange}
-                    placeholder="Ask about Salesforce objects, metadata, or record details...">
-                </lightning-textarea>
-
-                
-                <div class="slds-m-top_small">
+    <lightning-card title="Salesforce GPT Assistant">
+        <div class="slds-box slds-theme_default">
+            <div class="slds-chat chat-container">
+                <ul class="slds-chat-list chat-content">
+                    <template for:each={chatHistory} for:item="chat">
+                        <li key={chat.id} class="slds-chat-listitem slds-m-bottom_small">
+                            <div class={chat.containerClass}>
+                                <div class="slds-chat-message__text">
+                                    <div class="slds-chat-message__text_outbound"><strong>User:</strong> {chat.query}</div>
+                                    <template if:true={chat.responseFields}>
+                                        <table class="slds-table slds-table_bordered slds-table_cell-buffer">
+                                            <thead>
+                                                <tr class="slds-text-title_caps">
+                                                    <th>Field</th>
+                                                    <th>Value</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <template for:each={chat.responseFields} for:item="field">
+                                                    <tr key={field.name}>
+                                                        <td>{field.name}</td>
+                                                        <td>{field.value}</td>
+                                                    </tr>
+                                                </template>
+                                            </tbody>
+                                        </table>
+                                    </template>
+                                    <template if:false={chat.responseFields}>
+                                        <div class="response"><strong>ChatBot:</strong> {chat.response}</div>
+                                    </template>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+            <div class="slds-grid slds-grid_align-spread slds-p-top_medium">
+                <div class="slds-col slds-size_8-of-12">
+                    <lightning-textarea 
+                        label= "Ask a Question"
+                        value={userQuery} 
+                        onchange={handleQueryChange}
+                        placeholder="Ask about Salesforce objects, metadata, or record details...">
+                    </lightning-textarea>
+                </div>
+                <div class="slds-col slds-size_4-of-12 slds-text-align_right slds-align-middle slds-p-top_medium">
                     <lightning-button 
                         label="Submit Query" 
                         variant="brand"
@@ -18,7 +52,6 @@
                         class="slds-m-right_x-small" 
                         disabled={isLoading}>
                     </lightning-button>
-
                     <lightning-button 
                         label="Clear" 
                         variant="brand-outline" 
@@ -26,44 +59,10 @@
                         class="slds-m-right_x-small">
                     </lightning-button>
                 </div>
-
-                <template if:true={isLoading}>
-                    <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
-                </template>
             </div>
-
-            <div class="chat-history" style="overflow-y: auto;">
-                <template for:each={chatHistory} for:item="chat">
-                    <div key={chat.id} class="chat-message">
-                        <div class="query">
-                            <strong>User:</strong> {chat.query}
-                        </div>
-                        <div class="response">
-                            <template if:true={chat.responseFields}>
-                                <table class="slds-table slds-table_bordered slds-table_cell-buffer">
-                                    <thead>
-                                        <tr class="slds-text-title_caps">
-                                            <th>Field</th>
-                                            <th>Value</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <template for:each={chat.responseFields} for:item="field">
-                                            <tr key={field.name}>
-                                                <td>{field.name}</td>
-                                                <td>{field.value}</td>
-                                            </tr>
-                                        </template>
-                                    </tbody>
-                                </table>
-                            </template>
-                            <template if:false={chat.responseFields}>
-                                <div>{chat.response}</div>
-                            </template>
-                        </div>
-                    </div>
-                </template>
-            </div>
+            <template if:true={isLoading}>
+                <lightning-spinner alternative-text="Loading" size="small"></lightning-spinner>
+            </template>
         </div>
     </lightning-card>
 </template>
