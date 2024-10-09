@@ -13,7 +13,6 @@ export default class ChatGPTComponent extends LightningElement {
         this.userQuery = event.target.value;
     }
 
-    
     // Handle query submission
     handleQuerySubmit() {
         if (this.userQuery.trim() === '') {
@@ -24,10 +23,7 @@ export default class ChatGPTComponent extends LightningElement {
         this.isLoading = true;  // Show spinner
         this.response = '';  // Clear previous response
 
-            // Prepare conversation history to send to backend
-    const conversationHistory = this.chatHistory.map(chat => `User: ${chat.query}\nChatBot: ${chat.response}`).join('\n');
-
-        processQuery({ userQuery: this.userQuery, conversationHistory: conversationHistory })
+        processQuery({ userQuery: this.userQuery })
             .then(result => {
                 this.response = result;  // Update the reactive field 'response'
                 this.addToChatHistory(this.userQuery, this.response); // Add to chat history
