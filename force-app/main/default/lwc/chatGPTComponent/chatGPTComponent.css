@@ -1,18 +1,23 @@
 .chat-container {
-    max-height: 400px;
-    overflow: auto;
-    justify-content: space-between;
+    display: flex;
+    flex-direction: column; /* Stack chat content and input at the bottom */
+    height: 100%; /* Ensure it takes full height */
 }
 
 .chat-content {
-    flex-grow: 1;
-    overflow-y: auto;
+    flex-grow: 1; /* Allow chat content to take available space */
+    overflow-y: auto; /* Enable scrolling */
     padding: 1rem;
-    margin-bottom: 1rem;
+    margin-bottom: 0; /* Remove margin to align with the bottom */
 }
 
-.chat-message {
-    margin-bottom: 10px;
+.chat-input {
+    margin-top: 0; /* Align the input area with the bottom */
+    padding: 0.5rem; /* Add padding for spacing */
+}
+
+.slds-chat-listitem {
+    margin-bottom: 10px; /* Space between chat items */
 }
 
 .query {

@@ -51,6 +51,7 @@ export default class ChatGPTComponent extends LightningElement {
             // Initialize an array to hold formatted responses for each record
             const records = response.split('\n\n'); // Split records by double new lines
             records.forEach(record => {
+                if (record.trim()) { // Check if the record is not empty
                 const recordFields = [];
                 let naturalLanguageResponse = '';
 
@@ -78,6 +79,7 @@ export default class ChatGPTComponent extends LightningElement {
                     responseFields: recordFields,
                     response: naturalLanguageResponse
                 });
+            }
             });
         } else {
             // If it's not a record details response, use it as is
