@@ -2,9 +2,10 @@ public class ChatGPT {
     private static final String ENDPOINT = 'https://api.groq.com/openai/v1/chat/completions'; 
 
     @AuraEnabled
-    public static string getChatGPTResult(String searchTerm) {
+    public static string getChatGPTResult(String searchTerm, String conversationHistory) {
         String searchQueryEscape = String.isNotBlank(searchTerm) ? searchTerm.trim() : '';
 
+        
         HttpRequest request = new HttpRequest();
         request.setEndpoint(ENDPOINT);
         request.setHeader('Authorization', 'Bearer ' + System.Label.Chat_GPT_API_Key);
@@ -14,6 +15,14 @@ public class ChatGPT {
         Map<String, Object> requestBody = new Map<String, Object>(); 
         List<Map<String, String>> messagesList = new List<Map<String, String>>();
         
+         // Add conversation history
+         if (String.isNotBlank(conversationHistory)) {
+            Map<String, String> historyMessage = new Map<String, String>();
+            historyMessage.put('role', 'system');  // Treat history as system prompt
+            historyMessage.put('content', conversationHistory);
+            messagesList.add(historyMessage);
+        }
+        // Add user message
         Map<String, String> message = new Map<String, String>();
         message.put('role', 'user');
         message.put('content', searchQueryEscape);

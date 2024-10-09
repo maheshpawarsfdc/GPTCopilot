@@ -1,14 +1,15 @@
 public with sharing class GPTIntegrationController { 
 
     @AuraEnabled
-    public static Object processQuery(String userQuery) {  // Change return type to Object for flexibility
-        try {
-            if (userQuery.contains('Apex classes') || userQuery.contains('Apex triggers')) {
+    public static Object processQuery(String userQuery, String conversationHistory) {  // Change return type to Object for flexibility
+        try {// Check for specific Salesforce-related queries
+            if (userQuery.toLowerCase().contains('apex classes') || userQuery.toLowerCase().contains('apex triggers')) {
                 return getMetadataInfo(userQuery);
             } else if (userQuery.toLowerCase().contains('fetch details for') || userQuery.toLowerCase().contains('get details for')) {
                 return getRecordDetails(userQuery);
             } else {
-                return getGPTResponse(userQuery);
+                // Keep the existing functionality
+                return getGPTResponse(userQuery, conversationHistory);
             }
         } catch (Exception e) {
             return 'Error processing query: ' + e.getMessage();
@@ -18,14 +19,14 @@ public with sharing class GPTIntegrationController {
     @AuraEnabled
     public static String getMetadataInfo(String query) {
         try {
-            if (query.contains('How many Apex classes')) {
+            if (query.toLowerCase().contains('how many apex classes')) {
                 Integer classCount = OrgMetadatUtilityClass.getApexClassCount();
-                return 'There are ' + classCount + ' Apex classes in your org.';
-            } else if (query.contains('all Apex classes')) {
+                return 'There are ' + classCount + ' apex classes in your org.';
+            } else if (query.toLowerCase().contains('all apex classes')) {
                 return OrgMetadatUtilityClass.getApexClass();
-            } else if (query.contains('How many Apex triggers')) {
+            } else if (query.toLowerCase().contains('how many apex triggers')) {
                 Integer triggerCount = OrgMetadatUtilityClass.getApexTriggerCount();
-                return 'There are ' + triggerCount + ' Apex triggers in your org.';
+                return 'There are ' + triggerCount + ' apex triggers in your org.';
             } else {
                 return 'I cannot find information related to your query.';
             }
@@ -90,7 +91,9 @@ public static String getRecordDetails(String query) {
                     response += '\n';  // Add a blank line between records
                 }
 
-                return response; // Return the formatted response string
+
+                
+                return response.trim(); // Return the formatted response string
             }
         } else {
             return 'Could not parse the query. Please use the format: "Fetch details for [Object] with [Field]=[Value]"';
@@ -116,9 +119,9 @@ public static String getRecordDetails(String query) {
     }
 
     @AuraEnabled
-    public static String getGPTResponse(String userQuery) {
+    public static String getGPTResponse(String userQuery, String conversationHistory) {
         try {
-            return ChatGPT.getChatGPTResult(userQuery);
+            return ChatGPT.getChatGPTResult(userQuery, conversationHistory);
         } catch (Exception e) {
             return 'Error processing GPT response: ' + e.getMessage();
         }

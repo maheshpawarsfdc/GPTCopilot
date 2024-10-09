@@ -36,6 +36,8 @@ public with sharing class OrgMetadatUtilityClass {
         }
     }
 
+    
+
     @AuraEnabled
     public static Map<String, Object> getRecordDetails(String objectApiName, String criteria) {
         // Validate if object exists and is accessible
