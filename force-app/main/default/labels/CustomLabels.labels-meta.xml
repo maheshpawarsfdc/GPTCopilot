@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomLabels xmlns="http://soap.sforce.com/2006/04/metadata">
+    <labels>
+        <fullName>Chat_GPT_API_Key</fullName>
+        <language>en_US</language>
+        <protected>true</protected>
+        <shortDescription>Chat_GPT_API_Key</shortDescription>
+        <value>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</value>
+    </labels>
+</CustomLabels>
