@@ -1,13 +1,14 @@
 public with sharing class GPTIntegrationController { 
 
     @AuraEnabled
-    public static Object processQuery(String userQuery, String conversationHistory) {  // Change return type to Object for flexibility
-        try {// Check for specific Salesforce-related queries
+    public static Object processQuery(String userQuery, String conversationHistory) {  
+        try {
+            // Check for specific Salesforce-related queries
             if (userQuery.toLowerCase().contains('apex classes') || userQuery.toLowerCase().contains('apex triggers')) {
                 return getMetadataInfo(userQuery);
             } else if (userQuery.toLowerCase().contains('fetch details for') || userQuery.toLowerCase().contains('get details for')) {
                 return getRecordDetails(userQuery);
-            } else {
+            }else {
                 // Keep the existing functionality
                 return getGPTResponse(userQuery, conversationHistory);
             }
@@ -34,7 +35,7 @@ public with sharing class GPTIntegrationController {
             return 'Error fetching metadata info: ' + e.getMessage();
         }
     }
-
+    
     @AuraEnabled
 public static String getRecordDetails(String query) {
     String response = '';  // Initialize response as an empty string
@@ -54,17 +55,20 @@ public static String getRecordDetails(String query) {
                 return 'Invalid object name: ' + objectApiName;
             }
 
-            // Get the fields of the object dynamically
+            // Get the fields of the object dynamically, excluding binary fields
             DescribeSObjectResult describeResult = Schema.getGlobalDescribe().get(objectApiName).getDescribe();
             Map<String, Schema.SObjectField> fieldsMap = describeResult.fields.getMap();
             
-            // Create a list of all field names
+            // Filter out binary fields
             List<String> fieldNames = new List<String>();
-            for (String key : fieldsMap.keySet()) {
-                fieldNames.add(key);
+            for (String fieldNameKey : fieldsMap.keySet()) {
+                Schema.DisplayType fieldType = fieldsMap.get(fieldNameKey).getDescribe().getType();
+                if (fieldType != Schema.DisplayType.base64) {
+                    fieldNames.add(fieldNameKey);
+                }
             }
             
-            // Build the SOQL query with all fields
+            // Build the SOQL query with the filtered fields
             String soqlQuery = 'SELECT ' + String.join(fieldNames, ', ') + 
                                ' FROM ' + objectApiName + 
                                ' WHERE ' + fieldName + ' = :fieldValue';
@@ -75,7 +79,7 @@ public static String getRecordDetails(String query) {
             if (records.isEmpty()) {
                 return 'No records found for ' + objectApiName + ' where ' + fieldName + ' = ' + fieldValue;
             } else {
-                response += 'Record Details:\n';
+                response += 'Based on the information provided, the record with the ' + fieldName + ' "' + fieldValue + '" is:\n\n';
 
                 // Loop through all records and format each record's fields
                 for (SObject record : records) {
@@ -85,14 +89,12 @@ public static String getRecordDetails(String query) {
                     for (String fieldKey : recordDetails.keySet()) {
                         String fieldLabel = fieldsMap.get(fieldKey).getDescribe().getLabel();
                         Object fieldValueOutput = recordDetails.get(fieldKey);
-                        response += fieldLabel + ': ' + fieldValueOutput + '\n'; // Use string concatenation
+                        response += fieldLabel + ' is ' + (fieldValueOutput == null ? 'null' : fieldValueOutput) + '.\n'; // Format as plain text
                     }
 
                     response += '\n';  // Add a blank line between records
                 }
 
-
-                
                 return response.trim(); // Return the formatted response string
             }
         } else {
@@ -104,18 +106,9 @@ public static String getRecordDetails(String query) {
 }
 
 
-    // Use Schema to validate object names dynamically
     private static Boolean isValidObject(String objectApiName) {
         Map<String, Schema.SObjectType> sObjectTypes = Schema.getGlobalDescribe();
         return sObjectTypes.containsKey(objectApiName);
-    }
-
-    // Use Schema to validate field names dynamically
-    private static Boolean isValidField(String objectApiName, String fieldName) {
-        Map<String, Schema.SObjectType> sObjectTypes = Schema.getGlobalDescribe();
-        Schema.DescribeSObjectResult objDescribe = sObjectTypes.get(objectApiName).getDescribe();
-        Map<String, Schema.SObjectField> fields = objDescribe.fields.getMap();
-        return fields.containsKey(fieldName);
     }
 
     @AuraEnabled
