@@ -12,7 +12,7 @@ export default class ChatbotComponent extends LightningElement {
     }
 
     handleQuerySubmit() {
-        if (this.userQuery.trim() === '') {
+        if (!this.userQuery.trim()) {
             this.showToast('Error', 'Please enter a valid query.', 'error');
             return;
         }
@@ -20,31 +20,45 @@ export default class ChatbotComponent extends LightningElement {
         this.isLoading = true;
         const queryToSend = this.userQuery;
 
+        console.log('User Query:', queryToSend); // Log the user query before processing
+
         processQuery({ userQuery: queryToSend })
             .then(result => {
-                // If the result is a valid SOQL response, format it nicely
-                this.addToChatHistory(queryToSend, JSON.stringify(result));
+                console.log('Apex Method Result:', result); // Log the result from the Apex method
+
+                if (!result || result.length === 0) {
+                    console.error('No data returned from Apex processQuery method'); // Log if no data is returned
+                    this.showToast('Error', 'No data returned from the server.', 'error');
+                    return;
+                }
+
+                const formattedResponse = result.map(record => JSON.stringify(record, null, 2)).join('\n');
+                console.log('Formatted Response:', formattedResponse); // Log the formatted response
+                this.addToChatHistory(queryToSend, formattedResponse);
             })
             .catch(error => {
-                console.error('Error during query submission:', error);
-                this.showToast('Error', 'Error occurred while processing the query: ' + error.body.message, 'error');
+                console.error('Error processing the query:', error); // Log the error message
+                this.showToast('Error', 'Error processing the query: ' + error.body.message, 'error');
             })
             .finally(() => {
+                console.log('Finished processing query'); // Log when the processing is complete
                 this.isLoading = false;
                 this.userQuery = '';
             });
     }
 
     addToChatHistory(query, response) {
-        this.chatHistory.push({
+        console.log('Adding to Chat History:', { query, response }); // Log the new chat history entry
+        this.chatHistory = [...this.chatHistory, {
             id: this.chatHistory.length + 1,
             query: query,
             response: response
-        });
+        }];
     }
 
     handleClearChatHistory() {
         this.chatHistory = [];
+        console.log('Chat history cleared'); // Log when chat history is cleared
         this.showToast('Success', 'Chat history cleared.', 'success');
     }
 
