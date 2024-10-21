@@ -38,6 +38,12 @@ public class ChatGPT {
     public static List<Map<String, Object>> processQuery(String userQuery) {
         System.debug('User Query: ' + userQuery); // Log the user query
 
+        // Check if the user query is asking for field descriptions
+        if (userQuery.toLowerCase().startsWith('describe')) {
+            String objectName = userQuery.split(' ')[1]; // Assumes format: "describe ObjectName"
+            return describeObjectFields(objectName);
+        }
+
         // Call LLM and get the response
         String llmResponse = getResponseFromLLM(userQuery);
         System.debug('LLM Response: ' + llmResponse); // Log the response from LLM
@@ -64,6 +70,30 @@ public class ChatGPT {
         } else {
             throw new AuraHandledException('Unsupported query type returned from LLM.');
         }
+    }
+
+    // New method to describe fields of a given Salesforce object
+    private static List<Map<String, String>> describeObjectFields(String objectName) {
+        List<Map<String, String>> fieldsInfo = new List<Map<String, String>>();
+
+        try {
+            // Get the DescribeSObjectResult for the specified object
+            Schema.DescribeSObjectResult describeResult = Schema.getGlobalDescribe().get(objectName).getDescribe();
+
+            // Loop through the fields and add them to the list
+            for (Schema.SObjectField field : describeResult.fields.getMap().values()) {
+                Schema.DescribeFieldResult fieldDescribe = field.getDescribe();
+                fieldsInfo.add(new Map<String, String>{
+                    'fieldName' => fieldDescribe.getName(),
+                    'label' => fieldDescribe.getLabel(),
+                    'type' => fieldDescribe.getType().name()
+                });
+            }
+        } catch (Exception e) {
+            throw new AuraHandledException('Error describing fields for object ' + objectName + ': ' + e.getMessage());
+        }
+
+        return fieldsInfo;
     }
 
     private static String getResponseFromLLM(String userQuery) {
