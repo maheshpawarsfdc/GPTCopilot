@@ -1,7 +1,7 @@
 public class ChatGPT {
     private static final String NAMED_CREDENTIAL = 'LLM_API'; // Use your Named Credential name
 
-    private static String getNaturalLanguageSummary(String jsonData) {
+    public static String getNaturalLanguageSummary(String jsonData) {
         HttpRequest request = new HttpRequest();
         request.setEndpoint('callout:' + NAMED_CREDENTIAL);
         request.setHeader('Content-Type', 'application/json');
@@ -66,7 +66,7 @@ public class ChatGPT {
         }
     }
 
-    private static String getResponseFromLLM(String userQuery) {
+    public static String getResponseFromLLM(String userQuery) {
         HttpRequest request = new HttpRequest();
         request.setEndpoint('callout:' + NAMED_CREDENTIAL); // Adjust the path to your LLM endpoint
         request.setHeader('Content-Type', 'application/json');
@@ -125,18 +125,18 @@ public class ChatGPT {
         }
     }
 
-    private static String extractQueryFromContent(String llmResponse) {
+    public static String extractQueryFromContent(String llmResponse) {
         // Assuming the response is a plain text string that contains the query
         // You may want to apply additional parsing logic based on your LLM's response structure
         return llmResponse; // Modify as per the actual response format
     }
 
-    private static Boolean isSalesforceSpecific(String response) {
+    public static Boolean isSalesforceSpecific(String response) {
         String lowerCaseResponse = response.toLowerCase();
         return lowerCaseResponse.contains('select') || lowerCaseResponse.contains('find');
     }
 
-    private static List<Map<String, Object>> executeSoqlQuery(String content) {
+    public static List<Map<String, Object>> executeSoqlQuery(String content) {
         System.debug('Executing SOQL Query: ' + content);
         List<Map<String, Object>> result = new List<Map<String, Object>>();
 
@@ -170,12 +170,12 @@ public class ChatGPT {
         return result;
     }
 
-    private static Boolean isValidSOQLQuery(String query) {
+    public static Boolean isValidSOQLQuery(String query) {
         String lowerCaseQuery = query.toLowerCase().trim();
         return lowerCaseQuery.startsWith('select') && lowerCaseQuery.contains('from');
     }
 
-    private static List<Map<String, Object>> executeSoslQuery(String soslQuery) {
+    public static List<Map<String, Object>> executeSoslQuery(String soslQuery) {
         List<List<SObject>> searchResults;
         try {
             searchResults = Search.query(soslQuery);
@@ -202,7 +202,7 @@ public class ChatGPT {
         return result;
     }
 
-    private static List<Map<String, Object>> handleGeneralQuery(String userResponse) {
+    public static List<Map<String, Object>> handleGeneralQuery(String userResponse) {
         System.debug('Handling general response: ' + userResponse);
         List<Map<String, Object>> response = new List<Map<String, Object>>();
         Map<String, Object> generalResponse = new Map<String, Object>();
