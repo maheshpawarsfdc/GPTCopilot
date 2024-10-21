@@ -32,7 +32,7 @@ export default class ChatbotComponent extends LightningElement {
                     return;
                 }
 
-                const formattedResponse = result.map(record => JSON.stringify(record, null, 2)).join('\n');
+                const formattedResponse = this.formatData(result);
                 console.log('Formatted Response:', formattedResponse); // Log the formatted response
                 this.addToChatHistory(queryToSend, formattedResponse);
             })
@@ -45,6 +45,19 @@ export default class ChatbotComponent extends LightningElement {
                 this.isLoading = false;
                 this.userQuery = '';
             });
+    }
+
+    formatData(queryResults) {
+        if (!queryResults || queryResults.length === 0) {
+            return 'No records found.';
+        }
+    
+        return queryResults.map(record => {
+            return Object.keys(record).map(fieldName => {
+                const fieldValue = record[fieldName];
+                return `${fieldName}: ${fieldValue != null ? fieldValue : 'N/A'}`;
+            }).join(', ');
+        }).join('\n\n');
     }
 
     addToChatHistory(query, response) {

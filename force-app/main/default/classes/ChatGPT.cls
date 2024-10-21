@@ -1,6 +1,39 @@
 public class ChatGPT {
     private static final String NAMED_CREDENTIAL = 'LLM_API'; // Use your Named Credential name
 
+    private static String getNaturalLanguageSummary(String jsonData) {
+        HttpRequest request = new HttpRequest();
+        request.setEndpoint('callout:' + NAMED_CREDENTIAL);
+        request.setHeader('Content-Type', 'application/json');
+        request.setHeader('Authorization', 'Bearer ' + System.Label.Chat_GPT_API_Key);
+    
+        Map<String, Object> requestBody = new Map<String, Object>();
+        List<Map<String, String>> messagesList = new List<Map<String, String>>();
+    
+        String prompt = 'Convert the following JSON data into a human-readable summary: ' + jsonData;
+        
+        messagesList.add(new Map<String, String>{ 'role' => 'user', 'content' => prompt });
+    
+        requestBody.put('messages', messagesList);
+        requestBody.put('model', 'llama3-8b-8192'); // Adjust model if needed
+    
+        request.setBody(JSON.serialize(requestBody));
+        request.setMethod('POST');
+    
+        Http http = new Http();
+        HttpResponse response = http.send(request);
+        if (response.getStatusCode() == 200) {
+            Map<String, Object> responseMap = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+            List<Object> choices = (List<Object>) responseMap.get('choices');
+            if (!choices.isEmpty()) {
+                Map<String, Object> firstChoice = (Map<String, Object>) choices[0];
+                Map<String, Object> message = (Map<String, Object>) firstChoice.get('message');
+                return (String) message.get('content');
+            }
+        }
+        throw new AuraHandledException('Error summarizing data: ' + response.getBody());
+    }
+
     @AuraEnabled
     public static List<Map<String, Object>> processQuery(String userQuery) {
         System.debug('User Query: ' + userQuery); // Log the user query
@@ -105,25 +138,33 @@ public class ChatGPT {
 
     private static List<Map<String, Object>> executeSoqlQuery(String content) {
         System.debug('Executing SOQL Query: ' + content);
-        List<SObject> records;
-        try {
-            records = Database.query(content);
-            System.debug('Number of records returned: ' + records.size());
-        } catch (QueryException e) {
-            throw new AuraHandledException('Error executing SOQL query: ' + e.getMessage());
-        }
-
         List<Map<String, Object>> result = new List<Map<String, Object>>();
-        for (SObject record : records) {
-            Map<String, Object> recordMap = new Map<String, Object>();
-            for (String fieldName : record.getSObjectType().getDescribe().fields.getMap().keySet()) {
-                try {
-                    recordMap.put(fieldName, record.get(fieldName));
-                } catch (Exception e) {
-                    // Optionally handle inaccessible fields differently
+
+        try {
+            if (content.toLowerCase().startsWith('select count')) {
+                // Execute count query
+                Integer countResult = Database.countQuery(content);
+                result.add(new Map<String, Object>{ 'count' => countResult });
+                System.debug('Count result: ' + countResult);
+            } else {
+                // Execute regular SOQL query
+                List<SObject> records = Database.query(content);
+                System.debug('Number of records returned: ' + records.size());
+
+                for (SObject record : records) {
+                    Map<String, Object> recordMap = new Map<String, Object>();
+                    for (String fieldName : record.getSObjectType().getDescribe().fields.getMap().keySet()) {
+                        try {
+                            recordMap.put(fieldName, record.get(fieldName));
+                        } catch (Exception e) {
+                            // Optionally handle inaccessible fields differently
+                        }
+                    }
+                    result.add(recordMap);
                 }
             }
-            result.add(recordMap);
+        } catch (QueryException e) {
+            throw new AuraHandledException('Error executing SOQL query: ' + e.getMessage());
         }
 
         return result;
