@@ -1,8 +1,8 @@
 <template>
     <div class="slds-box slds-theme_default chat-container">
-        <div class="slds-chat chat-content">
+        <div class="slds-chat chat-content" tabindex="0">
             <ul class="slds-chat-list">
-                <template for:each={chatHistory} for:item="chat">
+                <template for:each={chatHistory} for:item="chat" >
                     <li key={chat.id} class="slds-chat-listitem slds-m-bottom_small">
                         <div class={chat.containerClass}>
                             <div class="slds-chat-message__text">
@@ -19,6 +19,7 @@
                 <lightning-textarea 
                     label="Ask a Question"
                     value={userQuery} 
+                    onkeydown={handleKeyDown}
                     onchange={handleQueryChange}
                     placeholder="Type your question...">
                 </lightning-textarea>

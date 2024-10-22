@@ -11,6 +11,12 @@ export default class ChatbotComponent extends LightningElement {
         this.userQuery = event.target.value;
     }
 
+    handleKeyDown(event){
+        if(event.key === 'Enter'){
+            this.handleQuerySubmit();
+        }
+    }
+
     handleQuerySubmit() {
         if (!this.userQuery.trim()) {
             this.showToast('Error', 'Please enter a valid query.', 'error');
@@ -67,12 +73,28 @@ export default class ChatbotComponent extends LightningElement {
             query: query,
             response: response
         }];
+        this.scrollToBottom();
+        this.setFocusToScrollableArea();
+    }
+
+    scrollToBottom(){
+        const chatContainer = this.template.querySelector('.chat-content');
+        if(chatContainer){
+            chatContainer.scrollTop = chatContainer.scrollHeight ;
+        }
     }
 
     handleClearChatHistory() {
         this.chatHistory = [];
         console.log('Chat history cleared'); // Log when chat history is cleared
         this.showToast('Success', 'Chat history cleared.', 'success');
+    }
+
+    setFocusToScrollableArea() {
+        const chatContent = this.template.querySelector('.chat-content');
+        if (chatContent) {
+            chatContent.focus();  // Focus the scrollable container
+        }
     }
 
     showToast(title, message, variant) {
@@ -82,4 +104,5 @@ export default class ChatbotComponent extends LightningElement {
             variant: variant
         }));
     }
+    
 }
