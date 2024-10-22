@@ -1,108 +1,108 @@
 import { LightningElement, track } from 'lwc';
-import processQuery from '@salesforce/apex/GPTIntegrationController.processQuery';
+import processQuery from '@salesforce/apex/ChatGPT.processQuery'; 
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
-export default class ChatGPTComponent extends LightningElement {
+export default class ChatbotComponent extends LightningElement {
     userQuery = '';
-    response = '';
-    isLoading = false;  // Spinner to indicate loading
-    @track chatHistory = []; // Track chat history
+    isLoading = false;
+    @track chatHistory = [];
 
-    // Handle query input changes
     handleQueryChange(event) {
         this.userQuery = event.target.value;
     }
 
-    
-    // Handle query submission
+    handleKeyDown(event){
+        if(event.key === 'Enter'){
+            this.handleQuerySubmit();
+        }
+    }
+
     handleQuerySubmit() {
-        if (this.userQuery.trim() === '') {
-            this.response = 'Please enter a valid query.';
+        if (!this.userQuery.trim()) {
+            this.showToast('Error', 'Please enter a valid query.', 'error');
             return;
         }
 
-        this.isLoading = true;  // Show spinner
-        this.response = '';  // Clear previous response
+        this.isLoading = true;
+        const queryToSend = this.userQuery;
 
-            // Prepare conversation history to send to backend
-    const conversationHistory = this.chatHistory.map(chat => `User: ${chat.query}\nChatBot: ${chat.response}`).join('\n');
+        console.log('User Query:', queryToSend); // Log the user query before processing
 
-        processQuery({ userQuery: this.userQuery, conversationHistory: conversationHistory })
+        processQuery({ userQuery: queryToSend })
             .then(result => {
-                this.response = result;  // Update the reactive field 'response'
-                this.addToChatHistory(this.userQuery, this.response); // Add to chat history
+                console.log('Apex Method Result:', result); // Log the result from the Apex method
+
+                if (!result || result.length === 0) {
+                    console.error('No data returned from Apex processQuery method'); // Log if no data is returned
+                    this.showToast('Error', 'No data returned from the server.', 'error');
+                    return;
+                }
+
+                const formattedResponse = this.formatData(result);
+                console.log('Formatted Response:', formattedResponse); // Log the formatted response
+                this.addToChatHistory(queryToSend, formattedResponse);
             })
             .catch(error => {
-                console.error('Error during query submission:', error);
-                this.response = 'Error occurred while processing the query.';
+                console.error('Error processing the query:', error); // Log the error message
+                this.showToast('Error', 'Error processing the query: ' + error.body.message, 'error');
             })
             .finally(() => {
-                this.isLoading = false;  // Hide spinner
-                this.userQuery = '';  // Clear input field after submission
+                console.log('Finished processing query'); // Log when the processing is complete
+                this.isLoading = false;
+                this.userQuery = '';
             });
     }
 
-    // Add the query and response to the chat history
-    addToChatHistory(query, response) {
-        // Check if the response indicates it's from getRecordDetails
-        const isRecordDetailsResponse = response.startsWith('Record Details:');
-
-        if (isRecordDetailsResponse) {
-            // Initialize an array to hold formatted responses for each record
-            const records = response.split('\n\n'); // Split records by double new lines
-            records.forEach(record => {
-                if (record.trim()) { // Check if the record is not empty
-                const recordFields = [];
-                let naturalLanguageResponse = '';
-
-                // Process each line of the record
-                const lines = record.trim().split('\n');
-                lines.forEach(line => {
-                    const parts = line.split(':');
-                    if (parts.length === 2) {
-                        const fieldName = parts[0].trim();
-                        const fieldValue = parts[1].trim();
-
-                        // Build natural language response for each record
-                        naturalLanguageResponse += `${fieldName} is ${fieldValue}. `;
-                        recordFields.push({
-                            name: fieldName,
-                            value: fieldValue
-                        });
-                    }
-                });
-
-                // Push individual record details into chat history
-                this.chatHistory.push({
-                    id: this.chatHistory.length + 1,
-                    query: query,
-                    responseFields: recordFields,
-                    response: naturalLanguageResponse
-                });
-            }
-            });
-        } else {
-            // If it's not a record details response, use it as is
-            this.chatHistory.push({
-                id: this.chatHistory.length + 1,
-                query: query,
-                response: response // Use as natural language response
-            });
+    formatData(queryResults) {
+        if (!queryResults || queryResults.length === 0) {
+            return 'No records found.';
         }
-
-        // Clear the input field after processing
-        this.userQuery = ''; // Clear input
+    
+        return queryResults.map(record => {
+            return Object.keys(record).map(fieldName => {
+                const fieldValue = record[fieldName];
+                return `${fieldName}: ${fieldValue != null ? fieldValue : 'N/A'}`;
+            }).join(', ');
+        }).join('\n\n');
     }
 
-    // Clear chat history
+    addToChatHistory(query, response) {
+        console.log('Adding to Chat History:', { query, response }); // Log the new chat history entry
+        this.chatHistory = [...this.chatHistory, {
+            id: this.chatHistory.length + 1,
+            query: query,
+            response: response
+        }];
+        this.scrollToBottom();
+        this.setFocusToScrollableArea();
+    }
+
+    scrollToBottom(){
+        const chatContainer = this.template.querySelector('.chat-content');
+        if(chatContainer){
+            chatContainer.scrollTop = chatContainer.scrollHeight ;
+        }
+    }
+
     handleClearChatHistory() {
         this.chatHistory = [];
-        this.response = ''; // Optionally clear the last response
-        // Show a success message (optional)
+        console.log('Chat history cleared'); // Log when chat history is cleared
+        this.showToast('Success', 'Chat history cleared.', 'success');
+    }
+
+    setFocusToScrollableArea() {
+        const chatContent = this.template.querySelector('.chat-content');
+        if (chatContent) {
+            chatContent.focus();  // Focus the scrollable container
+        }
+    }
+
+    showToast(title, message, variant) {
         this.dispatchEvent(new ShowToastEvent({
-            title: 'Success',
-            message: 'Chat history cleared.',
-            variant: 'success'
+            title: title,
+            message: message,
+            variant: variant
         }));
     }
+    
 }
